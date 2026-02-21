@@ -1,0 +1,28 @@
+package com.patientManagement.hospital_management.Advices;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDateTime;
+
+@Data
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class ApiResponse <T>{
+    @JsonFormat(pattern = "hh:mm:ss  dd-MM-yyyy")
+    LocalDateTime timeStamp;
+    T data;
+    ApiError error;
+public  ApiResponse(){
+    this.timeStamp=LocalDateTime.now();
+}
+public  ApiResponse(T data){
+    this();
+    this.data=data;
+}
+public  ApiResponse(ApiError error){
+    this();
+    this.error=error;
+}
+}

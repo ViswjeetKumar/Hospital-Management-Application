@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hospital Management - Insurance</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+        }
+
+        .header {
+            background-color: #1f2d3d;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        .btn-primary { background-color: #3498db; color: white; }
+        .btn-danger { background-color: #e74c3c; color: white; }
+        .btn-warning { background-color: #f39c12; color: white; }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 6px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 6px;
+            margin: 8px 0;
+        }
+
+        .error-box {
+            color: red;
+            margin-bottom: 10px;
+        }
+
+        .success-box {
+            color: green;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>Hospital Management - Insurance</h1>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <h3>Assign Insurance to Patient</h3>
+
+        <div id="assignError" class="error-box"></div>
+        <div id="assignSuccess" class="success-box"></div>
+
+        <input type="number" id="assignPatientId" placeholder="Patient ID">
+        <input type="text" id="policyNumber" placeholder="Policy Number">
+        <input type="text" id="provider" placeholder="Provider">
+        <input type="date" id="validUntil">
+
+        <button class="btn btn-primary" onclick="assignInsurance()">Assign Insurance</button>
+    </div>
+
+    <div class="card">
+        <h3>View Insurance By Patient ID</h3>
+
+        <div id="viewError" class="error-box"></div>
+
+        <input type="number" id="viewPatientId" placeholder="Patient ID">
+        <button class="btn btn-warning" onclick="viewInsurance()">View Insurance</button>
+
+        <div id="insuranceResult" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="card">
+        <h3>Remove Insurance From Patient</h3>
+
+        <div id="removeError" class="error-box"></div>
+        <div id="removeSuccess" class="success-box"></div>
+
+        <input type="number" id="removePatientId" placeholder="Patient ID">
+        <input type="number" id="removeInsuranceId" placeholder="Insurance ID">
+
+        <button class="btn btn-danger" onclick="removeInsurance()">Remove Insurance</button>
+    </div>
+
+</div>
+
+<script>
+
+    function unwrap(response) {
+        return response.data ? response.data : response;
+    }
+
+    function assignInsurance() {
+
+        clearMessages();
+
+        let patientId = document.getElementById("assignPatientId").value;
+
+        let body = {
+            policyNumber: document.getElementById("policyNumber").value,
+            provider: document.getElementById("provider").value,
+            validUntil: document.getElementById("validUntil").value
+        };
+
+        fetch(`/api/insurance/assign/${patientId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        })
+        .then(async res => {
+            if (!res.ok) {
+                let error = await res.json();
+                document.getElementById("assignError").innerText =
+                    error.error?.message || error.message || "Error occurred";
+                return;
+            }
+
+            let response = await res.json();
+            let data = unwrap(response);
+
+            document.getElementById("assignSuccess").innerText =
+                "Insurance assigned successfully. Insurance ID: " + data.id;
+        });
+    }
+
+    function viewInsurance() {
+
+        clearMessages();
+
+        let patientId = document.getElementById("viewPatientId").value;
+
+        fetch(`/api/insurance/id/${patientId}`)
+            .then(async res => {
+                if (!res.ok) {
+                    let error = await res.json();
+                    document.getElementById("viewError").innerText =
+                        error.error?.message || error.message || "Not found";
+                    return;
+                }
+
+                let response = await res.json();
+                let data = unwrap(response);
+
+                document.getElementById("insuranceResult").innerHTML = `
+                    <strong>Insurance ID:</strong> ${data.id}<br>
+                    <strong>Policy Number:</strong> ${data.policyNumber}<br>
+                    <strong>Provider:</strong> ${data.provider}<br>
+                    <strong>Valid Until:</strong> ${data.validUntil}
+                `;
+            });
+    }
+
+    function removeInsurance() {
+
+        clearMessages();
+
+        let patientId = document.getElementById("removePatientId").value;
+        let insuranceId = document.getElementById("removeInsuranceId").value;
+
+        fetch(`/api/insurance/remove?patientId=${patientId}&insuranceId=${insuranceId}`, {
+            method: "DELETE"
+        })
+        .then(async res => {
+            if (!res.ok) {
+                let error = await res.json();
+                document.getElementById("removeError").innerText =
+                    error.error?.message || error.message || "Error occurred";
+                return;
+            }
+
+            let message = await res.text();
+            document.getElementById("removeSuccess").innerText = message;
+        });
+    }
+
+    function clearMessages() {
+        document.getElementById("assignError").innerText = "";
+        document.getElementById("assignSuccess").innerText = "";
+        document.getElementById("viewError").innerText = "";
+        document.getElementById("removeError").innerText = "";
+        document.getElementById("removeSuccess").innerText = "";
+        document.getElementById("insuranceResult").innerHTML = "";
+    }
+
+</script>
+
+</body>
+</html>
